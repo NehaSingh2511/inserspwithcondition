@@ -1,0 +1,519 @@
+using System;
+using System.Activities;
+using System.Data;
+using System.Data.SqlClient;
+using System.Net;
+using System.Text;
+using System.Web.Security;
+using System.Web.UI;
+
+public partial class WalletDeposit : System.Web.UI.Page
+{
+    Datautility dataUtility = new Datautility();
+    SqlConnection con = new SqlConnection(method.str);
+    utility ut = new utility();
+    WebClient client = new WebClient();
+    string strSessionUserId = "";
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (Session["userId"] != null && Session["userId"].ToString() != string.Empty)
+        {
+            strSessionUserId = Session["userId"].ToString();
+        }
+        else
+        {
+            Response.Redirect(FormsAuthentication.LoginUrl);
+        }
+        if (!IsPostBack)
+        {
+            //getpercentage();
+            GetBalance(strSessionUserId);
+            GetTokenRate();
+            GetWalletBalance();
+            //GetWalletBalance2();
+            getbuySellReport();
+        }
+    }
+    private void GetBalance(string strUserId)
+    {
+        try
+        {
+            DataSet ds = new DataSet();
+
+            ds = ut.GetAllDataBalance(strUserId);
+
+           
+            DataTable dt_shellamt = new DataTable();
+            DataTable dt_buy = new DataTable();
+            DataTable dt_shell = new DataTable();
+            DataTable dt_fund = new DataTable();
+            DataTable dt_countAmount = new DataTable();
+
+
+
+
+
+            DataTable dt_buy_token = new DataTable();
+            DataTable dt_buy_usdt = new DataTable();
+            dt_buy_usdt = ds.Tables[19];
+
+
+            decimal topupwallet = 0, Balance=0, shellamount=0, buyamount=0,fundamount=0;
+            dt_fund = ds.Tables[19];
+            dt_countAmount = ds.Tables[32];
+            dt_buy = ds.Tables[33];
+            dt_shell = ds.Tables[34];
+            dt_shellamt = ds.Tables[35];
+
+
+           
+
+
+
+           
+            
+
+            if (dt_countAmount.Rows.Count > 0)
+            {
+                Balance += Convert.ToDecimal(dt_countAmount.Rows[0][0].ToString());
+            }
+           
+            if (dt_shellamt.Rows.Count > 0)
+            {
+                Balance -= Convert.ToDecimal(dt_shellamt.Rows[0][0].ToString());
+            }
+
+            lblbalance.Text = Balance.ToString("0.00");
+
+
+            if(dt_shell.Rows.Count>0)
+            {
+                shellamount= Convert.ToDecimal(dt_shell.Rows[0][0].ToString());
+            }
+            lblsell.Text = shellamount.ToString("0.00");
+            if(dt_buy.Rows.Count>0)
+            {
+                buyamount = Convert.ToDecimal(dt_buy.Rows[0][0].ToString());
+            }
+            lblbuy.Text = buyamount.ToString("0.00");
+
+            if (dt_fund.Rows.Count > 0)
+            {
+                fundamount += Convert.ToDecimal(dt_fund.Rows[0][0].ToString());
+
+
+                
+            }
+            if (dt_countAmount.Rows.Count > 0)
+            {
+
+                fundamount -= Convert.ToDecimal(dt_countAmount.Rows[0][0].ToString());
+
+
+            }
+
+
+            lblfund.Text = fundamount.ToString("0.00");
+
+            if (dt_buy_usdt.Rows.Count > 0)
+            {
+
+                topupwallet += Convert.ToDecimal(dt_buy_usdt.Rows[0][0].ToString());
+            }
+
+            //lbltopupwallet.Text = topupwallet.ToString("0.00");
+            //lbltopupwallet2.Text = topupwallet.ToString("0.00");
+
+        }
+        catch
+        {
+        }
+    }
+    //protected void btn_deposit_Click(object sender, EventArgs e)
+    //{
+    //    try
+    //    {
+    //        strSessionUserId = Convert.ToString(Session["userId"]);
+
+    //        if (txtDepositID.Text != "" && txtamount.Text != "" && txtpassword.Text != "")
+    //        {
+    //            GetBalance(strSessionUserId);
+    //            string trpasword = Getpasword();
+    //            if (txtpassword.Text == trpasword)
+    //            {
+    //                decimal cashwallet = 0;
+
+    //                string qstr = "";
+    //                qstr = "select appmstregno from appmst where appmstregno='" + txtDepositID.Text + "'";
+    //                DataTable t1 = new DataTable();
+    //                SqlDataAdapter dr = new SqlDataAdapter(qstr, con);
+    //                dr.Fill(t1);
+    //                if (t1.Rows.Count > 0)
+    //                {
+    //                    //int type = 0;
+    //                    //{
+    //                        cashwallet = Convert.ToDecimal(lbltopupwallet.Text);
+
+    //                    //    type = 2;
+    //                    //}
+
+    //                    decimal usd = Convert.ToDecimal(txtamount.Text);
+    //                    if (usd >=0)
+    //                    {
+    //                        if (cashwallet >= usd)
+    //                        {
+    //                            SqlCommand com1 = new SqlCommand("Sp_trade", con);
+    //                            com1.CommandType = CommandType.StoredProcedure;
+    //                            com1.Parameters.AddWithValue("@regno", txtDepositID.Text);
+    //                            com1.Parameters.AddWithValue("@USD", usd);
+
+    //                            //com1.Parameters.AddWithValue("@regno", Convert.ToString(Session["UserID"]));
+    //                            //com1.Parameters.AddWithValue("@USD", usd);
+    //                            //com1.Parameters.AddWithValue("@UpdateID", txtDepositID.Text);
+    //                            //com1.Parameters.AddWithValue("@type", type);
+    //                            con.Open();
+    //                            com1.CommandTimeout = 100000;
+    //                            int i = com1.ExecuteNonQuery();
+    //                            con.Close();
+    //                            //if (i > 0)
+    //                            //{
+    //                            //    Session["activate"] = txtDepositID.Text;
+    //                            //    txtDepositID.Text = "";
+    //                            //    txtamount.Text = "";
+    //                            //    Response.Redirect("trans_Thanks.aspx");
+    //                                lblerrormsg.Text = "Thanks ! Wallet Transfer Successfully Done";
+    //                                //lblerrormsg.ForeColor = System.Drawing.Color.Green;
+    //                                //getpercentage();
+    //                                //GetBalance(strSessionUserId);
+
+    //                            //}
+    //                            //else
+    //                            //{
+    //                            //    lblerrormsg.Text = "Failed, Please try again....!";
+    //                            //    lblerrormsg.ForeColor = System.Drawing.Color.Red;
+    //                            //}
+    //                        }
+    //                        else
+    //                        {
+    //                            lblerrormsg.Text = "Insufficient wallet amount, please try again....!";
+    //                            lblerrormsg.ForeColor = System.Drawing.Color.Red;
+    //                        }
+    //                    }
+    //                    else
+    //                    {
+    //                        lblerrormsg.Text = "Minimum Transfer Amount $10 !";
+    //                    }
+    //                }
+    //                else
+    //                {
+    //                    ScriptManager.RegisterStartupScript(this, typeof(string), "Success", "$(function (){ swal('Sorry !', 'Please Enter Valid User ID....!','info');});", true);
+    //                }
+    //            }
+    //            else
+    //            {
+    //                lblerrormsg.Text = "Please Enter Correct Transaction Password....!";
+    //                lblerrormsg.ForeColor = System.Drawing.Color.Red;
+    //            }
+    //        }
+    //        else
+    //        {
+    //            lblerrormsg.Text = "Please fill values for required fields....!";
+    //            lblerrormsg.ForeColor = System.Drawing.Color.Red;
+    //        }
+    //    }
+    //    catch (Exception exe)
+    //    {
+    //        throw (exe);
+    //    }
+    //}
+    protected void btn_deposit_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if(txtamount.Text!=null && txtamount.Text != "")
+            {
+                string hasnumber = "", aaaa = "";
+                int a = 1;
+                string charPool = "abcdef0123456789";
+                StringBuilder rs = new StringBuilder();
+                Random rnd = new Random();
+                while (a > 0)
+                {
+                    rs.Append(charPool[(int)(rnd.NextDouble() * charPool.Length)]);
+
+                    if (rs.Length == 16)
+                    {
+                        aaaa = rs.ToString();
+                        hasnumber = hasnumber + aaaa;
+                        break;
+                    }
+                }
+                strSessionUserId = Convert.ToString(Session["userId"]);
+
+                decimal usd = Convert.ToDecimal(txtamount.Text);
+                if (usd >= 0)
+                {
+                    decimal cashwallet = Convert.ToDecimal(lbltopupwallet.Text);
+                    if (cashwallet >= usd)
+                    {
+                        SqlCommand com1 = new SqlCommand("SP_BuyTrade", con);
+                        com1.CommandType = CommandType.StoredProcedure;
+                        com1.Parameters.AddWithValue("@regno", strSessionUserId);
+                        com1.Parameters.AddWithValue("@amount", usd);
+                        com1.Parameters.AddWithValue("@tokenamount", Convert.ToDecimal(txtreceivedtoken.Text));
+                        com1.Parameters.AddWithValue("@tokenrate", Convert.ToDecimal(lbltokenrate.InnerText));
+                        com1.Parameters.AddWithValue("@hasnumber", hasnumber);
+
+                        con.Open();
+                        com1.CommandTimeout = 100000;
+                        int i = com1.ExecuteNonQuery();
+                        con.Close();
+                        if (i > 0)
+                        {
+                            lblerrormsg.Text = "Thanks ! Wallet Transfer Successfully Done";
+                            GetWalletBalance();
+                            GetTokenRate();
+                            getbuySellReport();
+                        }
+                    }
+                    else
+                    {
+                        lblerrormsg.Text = "Insufficient wallet amount, please try again....!";
+                        lblerrormsg.ForeColor = System.Drawing.Color.Red;
+                    }
+                }
+                else
+                {
+                    lblerrormsg.Text = "Minimum Transfer Amount $10 !";
+                }
+            }
+            else
+            {
+                lblerrormsg.Text = "Please Enter Amount...!";
+                lblerrormsg.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+        catch (Exception exe)
+        {
+            throw (exe);
+        }
+    }
+    public void getpercentage()
+    {
+        strSessionUserId = Session["userId"].ToString();
+        con.Open();
+        SqlCommand com = new SqlCommand("get_wallet_transfer", con);
+        com.CommandType = CommandType.StoredProcedure;
+        com.Parameters.AddWithValue("@regno", strSessionUserId);
+        SqlDataAdapter da = new SqlDataAdapter(com);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+        if (dt.Rows.Count > 0)
+        {
+            rptpercentage.DataSource = dt;
+            rptpercentage.DataBind();
+        }
+        con.Close();
+    }
+    public void getbuySellReport()
+    {
+        
+        SqlCommand com = new SqlCommand("SP_BuySellTradeReport", con);
+        com.CommandType = CommandType.StoredProcedure;
+        SqlDataAdapter da = new SqlDataAdapter(com);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+        if (dt.Rows.Count > 0)
+        {
+            rptpercentage.DataSource = dt;
+            rptpercentage.DataBind();
+        }
+    }
+    //protected void txtuserid_TextChanged(object sender, EventArgs e)
+    //{
+    //    if (txtDepositID.Text != null)
+    //    {
+    //        con.Close();
+    //        strSessionUserId = Convert.ToString(Session["UserId"]);
+    //        con.Open();
+    //        SqlCommand com = new SqlCommand("select appmstfname from appmst WITH (NOLOCK) where appmstregno='" + txtDepositID.Text.Trim().ToUpper() + "'", con);
+    //        SqlDataAdapter da = new SqlDataAdapter(com);
+    //        DataTable dt = new DataTable();
+    //        da.Fill(dt);
+    //        con.Close();
+
+    //        if (dt.Rows.Count > 0)
+    //        {
+    //            lblDepositeUserName.Text = Convert.ToString(dt.Rows[0][0]);
+    //            lblDepositeUserName.ForeColor = System.Drawing.Color.White;
+    //            btn_deposit.Enabled = true;
+    //        }
+    //        else
+    //        {
+    //            btn_deposit.Enabled = false;
+    //            lblDepositeUserName.Text = "Sorry ! Invalid User ID !";
+    //            lblDepositeUserName.ForeColor = System.Drawing.Color.Red;
+    //        }
+
+
+    //    }
+    //}
+    public string Getpasword()
+    {
+        string strsessionid = Convert.ToString(Session["UserID"]);
+        SqlCommand cmd = new SqlCommand("select  AppMstlogin  from appmst where appmstregno='" + strsessionid + "'", con);
+        SqlDataAdapter da = new SqlDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+        if (dt.Rows.Count > 0)
+        {
+            return (dt.Rows[0][0].ToString());
+        }
+        return "";
+    }
+    protected void txtamount_TextChanged(object sender, EventArgs e)
+    {
+        if(txtamount.Text !=null && txtamount.Text != "")
+        {
+            decimal amt = Convert.ToDecimal(txtamount.Text);
+            decimal rate = Convert.ToDecimal(lbltokenrate.InnerText);
+            decimal allocation = (amt * 75) / 100;
+            lblallocation.Text = allocation.ToString("0.0000");
+            txtreceivedtoken.Text = (allocation / rate).ToString("0.0000");
+        }
+        else
+        {
+            lblallocation.Text = "";
+            txtreceivedtoken.Text = "";
+        }
+    }
+    protected void txttokenamount_TextChanged(object sender, EventArgs e)
+    {
+        if(txttokenamount.Text != null && txttokenamount.Text != "")
+        {
+            decimal tokenamt = Convert.ToDecimal(txttokenamount.Text);
+            decimal rate = Convert.ToDecimal(lbltokenrate2.InnerText);
+            decimal amt = tokenamt * rate;
+            txtamount2.Text = amt.ToString("0.0000");
+        }
+        else
+        {
+            lblallocation.Text = "";
+            txtreceivedtoken.Text = "";
+        }
+    }
+    public void GetTokenRate()
+    {
+        SqlCommand cmd = new SqlCommand("select * from tbl_traderate", con);
+        SqlDataAdapter da = new SqlDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+        if (dt.Rows.Count > 0)
+        {
+            //return (dt.Rows[0][0].ToString());
+            lbltokenrate.InnerText = dt.Rows[0]["Curr_rate"].ToString();
+            lbltokenrate2.InnerText = dt.Rows[0]["prev_rate"].ToString();
+        }
+    }
+    public void GetWalletBalance()
+    {
+        string strsessionid = Convert.ToString(Session["UserID"]);
+        SqlCommand cmd = new SqlCommand("SP_TradeWalletBalance", con);
+        cmd.CommandType= CommandType.StoredProcedure;
+        cmd.Parameters.AddWithValue("@UserId", strsessionid);
+        SqlDataAdapter da = new SqlDataAdapter(cmd);
+        DataTable dt = new DataTable();
+        da.Fill(dt);
+        if (dt.Rows.Count > 0)
+        {
+            lbltopupwallet.Text = dt.Rows[0]["buywallet"].ToString();
+            lbltopupwallet2.Text = dt.Rows[0]["sellwallet"].ToString();
+        }
+    }
+    //public void GetWalletBalance2()
+    //{
+    //    string strsessionid = Convert.ToString(Session["UserID"]);
+    //    SqlCommand cmd = new SqlCommand("select isnull(sum(tokenamount),0) from tbl_buytrade where regno='" + strsessionid + "'", con);
+    //    SqlDataAdapter da = new SqlDataAdapter(cmd);
+    //    DataTable dt = new DataTable();
+    //    da.Fill(dt);
+    //    if (dt.Rows.Count > 0)
+    //    {
+    //        //return (dt.Rows[0][0].ToString());
+    //        //lbltopupwallet.Text = dt.Rows[0]["usd"].ToString();
+    //        lbltopupwallet2.Text = dt.Rows[0][0].ToString();
+    //    }
+    //}
+    protected void btnSell_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if(txttokenamount.Text!=null && txttokenamount.Text != "")
+            {
+                string hasnumber = "", aaaa = "";
+                int a = 1;
+                string charPool = "abcdef0123456789";
+                StringBuilder rs = new StringBuilder();
+                Random rnd = new Random();
+                while (a > 0)
+                {
+                    rs.Append(charPool[(int)(rnd.NextDouble() * charPool.Length)]);
+                    if (rs.Length == 16)
+                    {
+                        aaaa = rs.ToString();
+                        hasnumber = hasnumber + aaaa;
+                        break;
+                    }
+                }
+                strSessionUserId = Convert.ToString(Session["userId"]);
+
+                decimal usd = Convert.ToDecimal(txtamount2.Text);
+                if (usd >= 0)
+                {
+                    decimal cashwallet = Convert.ToDecimal(lbltopupwallet2.Text);
+                    if (cashwallet >= usd)
+                    {
+                        SqlCommand com1 = new SqlCommand("SP_SellTrade", con);
+                        com1.CommandType = CommandType.StoredProcedure;
+                        com1.Parameters.AddWithValue("@regno", strSessionUserId);
+                        com1.Parameters.AddWithValue("@amount", usd);
+                        com1.Parameters.AddWithValue("@tokenamount", Convert.ToDecimal(txttokenamount.Text));
+                        com1.Parameters.AddWithValue("@tokenrate", Convert.ToDecimal(lbltokenrate2.InnerText));
+                        com1.Parameters.AddWithValue("@hasnumber", hasnumber);
+
+                        con.Open();
+                        com1.CommandTimeout = 100000;
+                        int i = com1.ExecuteNonQuery();
+                        con.Close();
+                        if (i > 0)
+                        {
+                            Label4.Text = "Thanks ! Wallet Sell Successfully Done";
+                            GetWalletBalance();
+                            GetTokenRate();
+                            getbuySellReport();
+                        }
+                    }
+                    else
+                    {
+                        Label4.Text = "Insufficient wallet amount, please try again....!";
+                        Label4.ForeColor = System.Drawing.Color.Red;
+                    }
+                }
+                else
+                {
+                    Label4.Text = "Minimum Transfer Amount $10 !";
+                }
+            }
+            else
+            {
+                Label4.Text = "Please Enter Token Amount....!";
+                Label4.ForeColor = System.Drawing.Color.Red;
+            }
+        }
+        catch (Exception exe)
+        {
+            throw (exe);
+        }
+    }
+}
