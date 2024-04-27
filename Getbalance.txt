@@ -1,0 +1,42 @@
+CREATE proc [dbo].[GetBalance]                                                       
+    @UserId varchar(100)                                                      
+AS                                                      
+BEGIN              
+              
+Select isnull(sum(amount),0) from Tbl_Update_OtherId WITH (NOLOCK) where regno=@UserId  --0                                                      
+Select isnull(sum(amount),0) from Tbl_Update_OtherId WITH (NOLOCK) where updateid=@UserId  --1                                                      
+Select isnull(sum(Left_Active+Right_Active),0) from appmst WHERE AppMstRegNo=@UserId  --2    
+Select (isnull(sum(appmstlefttotal+appmstrighttotal),0)-isnull(sum(Left_Active+Right_Active),0)) from appmst WHERE AppMstRegNo=@UserId --3  
+--Select count(*) from Tbl_Level_Details d LEFT JOIN AppMst a on d.RegNo=a.AppMstRegNo WHERE d.TopId=@UserId and a.jointype=0   --3                    
+Select count(1) from appmst where SponsorID=@UserId --4                    
+Select count(1) from  appmst where SponsorID=@UserId and jointype>0   --5                          
+Select isnull(sum(jointype),0) from AppMst WITH (NOLOCK) where sponsorid=@UserId  --6                                                      
+Select oprank,appmstid, appmstfname,FORMAT(appmstdoj,'dd-MMM-yyyy HH:mm:ss') appmstdoj,jointype,jointype as joinamt,userdob                    
+   ,FORMAT(activedate,'dd-MMM-yyyy HH:mm:ss') activedate,appmstrank,AppMstLeftTotal,AppMstRightTotal,(AppMstLeftTotal+AppMstRightTotal) totalid,(((Left_Active+Right_Active)*4200)+Power_Left+Power_Right) as                     
+  totalbusiness,Power_Left,Power_Right,(LP+RP) as freshbv,((Left_Active*4200)+Power_Left) as leftbusiness,((Right_Active*4200)+Power_Right) as rightbusiness,TotalLeftID,TotalRightID,Left_Active,    
+  Right_Active,email,AppMstSponsorTotal,* from appmst WITH (NOLOCK) where appmstregno=@UserId  --7                                                    
+select status from kycdoc where email=@UserId and status=1  --8                          
+Select * from news1 WITH (NOLOCK)  --9                    
+                    
+Select 0--isnull(sum(roi),0) from tbl_roi WITH (NOLOCK) where Regno=@UserId  --10                    
+select 0--isnull(sum(roi),0) from tbl_roi WITH (NOLOCK) where regno=@UserId and CAST(createdate as date) = CAST((dateadd(minute,(30),dateadd(hour,(5),getutcdate()))) as date)  --11                          
+Select isnull(sum(Direct),0) from tbl_direct_income WITH (NOLOCK) where SID=@UserId --12                                                      
+Select isnull(sum(levelinc),0) from tbl_level_income WITH (NOLOCK) where sid=@UserId --13                     
+Select isnull(sum(income),0) from tbl_binary_income WITH (NOLOCK) where regno=@UserId --14                    
+Select 0--isnull(sum(Income),0) from Tbl_Difference_Income WITH (NOLOCK) where sid=@UserId   --15                          
+Select isnull(sum(amount),0) from tbl_ewallet WITH (NOLOCK) where regno=@UserId and active<2 --16                          
+                    
+Select isnull(sum(usd),0) from tbl_transaction_details WITH (NOLOCK) where comefrom=@UserId --17                          
+Select 0--isnull(sum(totalincome),0) from Tbl_Payout_List WITH (NOLOCK) where regno=@UserId --18                          
+declare @amt decimal(18,4)=0                          
+select @amt=isnull(sum(USD),0) from tbl_transaction_details where regno=@UserId   --19                          
+select @amt as amt                
+Select isnull(sum(Income),0) from Tbl_Support_Fund WITH (NOLOCK) where Regno=@UserId  --20                    
+Select isnull(sum(coin),0) from tbl_transaction_details where regno=@UserId   --21                          
+        
+Select isnull(sum(Income),0) from Tbl_Bike_Fund WITH (NOLOCK) where Regno=@UserId  --22                    
+Select isnull(sum(Income),0) from Tbl_Car_Fund WITH (NOLOCK) where Regno=@UserId  --23                    
+Select isnull(sum(Income),0) from Tbl_House_Fund WITH (NOLOCK) where Regno=@UserId  --24                    
+Select isnull(sum(Income),0) from Tbl_Roylaty_Fund WITH (NOLOCK) where Regno=@UserId  --25                    
+Select isnull(sum(T_Left+T_Right),0) from appmst WITH (NOLOCK) WHERE AppMstRegNo=@UserId --26      
+END 

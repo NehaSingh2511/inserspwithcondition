@@ -1,0 +1,53 @@
+﻿alter proc [dbo].[GetBalance]                                     
+ @UserId varchar(100)                                    
+As                                    
+Begin                  
+Select isnull(sum(amount),0) from Tbl_Update_OtherId WITH (NOLOCK) where regno=@UserId  --0                                    
+Select isnull(sum(amount),0) from Tbl_Update_OtherId WITH (NOLOCK) where updateid=@UserId  --1                                    
+Select count(*) from Tbl_Level_Details d LEFT JOIN AppMst a on d.RegNo=a.AppMstRegNo WHERE d.TopId=@UserId and a.jointype>0  --2             
+Select count(*) from Tbl_Level_Details d LEFT JOIN AppMst a on d.RegNo=a.AppMstRegNo WHERE d.TopId=@UserId and a.jointype=0   --3                               
+Select isnull(sum(jointype),0) from AppMst WITH (NOLOCK) where sponsorid=@UserId  --4                                    
+Select oprank,appmstid, appmstfname,FORMAT(appmstdoj,'dd-MMM-yyyy HH:mm:ss') appmstdoj,jointype,jointype as joinamt,userdob,FORMAT(activedate,'dd-MMM-yyyy HH:mm:ss') activedate,appmstrank,AppMstLeftTotal as totalid,TotalLeftID as totalbusiness,email,     
+  
+   
+AppMstSponsorTotal,* from appmst WITH (NOLOCK) where appmstregno=@UserId  --5                                  
+Select isnull(sum(amount),0) from Tbl_Ewallet WITH (NOLOCK) where regno=@UserId --6                                    
+Select * from news1 WITH (NOLOCK)  --7                                    
+Select isnull(sum(roi),0) from tbl_roi WITH (NOLOCK) where Regno=@UserId  --8                                   
+Select isnull(sum(levelinc),0) from tbl_level_income WITH (NOLOCK) where sid=@UserId and type is null --9             
+Select isnull(sum(Direct),0) from tbl_direct_income WITH (NOLOCK) where SID=@UserId --10                                    
+Select isnull(sum(amount),0) from tbl_ewallet WITH (NOLOCK) where regno=@UserId and type=1 and active<2  --11        
+Select isnull(sum(levelinc),0) from tbl_level_income WITH (NOLOCK) where sid=@UserId and type='ROI' --12        
+Select isnull(sum(usd),0) from tbl_transaction_details WITH (NOLOCK) where comefrom=@UserId --13        
+Select count(*) from  appmst where SponsorID=@UserId --14        
+Select isnull(sum(totalincome),0) from Tbl_Payout_List WITH (NOLOCK) where regno=@UserId --15        
+select status from kycdoc where email=@UserId and status=1  --16        
+select isnull(sum(roi),0) from tbl_roi WITH (NOLOCK) where regno=@UserId   and CAST(createdate as date) = CAST((dateadd(minute,(30),dateadd(hour,(5),getutcdate()))) as date)  --17        
+Select isnull(sum(Income),0) from Tbl_Difference_Income WITH (NOLOCK) where sid=@UserId   --18        
+Select isnull(sum(usd),0) from Tbl_Buy_busd WITH (NOLOCK) where regno=@UserId  --19        
+select isnull(sum(Income),0) from Tbl_Key_Bonus where regno=@UserId   --20        
+select  rate from tbl_token_rate   --21        
+declare @amt decimal(18,4)=0        
+select @amt=isnull(sum(USD),0) from tbl_transaction_details where regno=@UserId   --22        
+select @amt as amt        
+Select isnull(sum(jointype),0) from  appmst where SponsorID=@UserId   --23        
+        
+select isnull(sum(usd),0)  from Tbl_Buy_LDC_token where RegNo=@UserId   --24        
+        
+Select count(*) from  appmst where SponsorID=@UserId and jointype>0   --25        
+Select isnull(sum(amount),0) from tbl_ewallet WITH (NOLOCK) where regno=@UserId and type=2 and active<2  --26        
+Select isnull(sum(amount),0) from tbl_Reserve_wallet WITH (NOLOCK) where regno=@UserId   --27        
+        
+select 0 --* from phcworld.tbl_fasttrack_achiever where status=1 and regno=@UserId   --28        
+select 0 --* from phcworld.tbl_fasttrack_achiever where status=2 and regno=@UserId   --29        
+select 0 --* from phcworld.tbl_fasttrack_achiever where status=3 and regno=@UserId   --30        
+        
+select 0--rate from phcworld.tbl_dollar_rate   --31      
+Select isnull(sum(amount),0) from Tbl_BuyTrade WITH (NOLOCK) where regno=@UserId  --32 
+
+select isnull(sum(tokenamount),0) from Tbl_BuyTrade with (NOLOCK) where regno=@UserId  --33
+select isnull (sum(tokenamount),0) from Tbl_SellTrade with (NOLOCK) WHERE regno=@UserId --34
+
+select isnull(sum(amount),0) from Tbl_SellTrade with (NOLOCK) where regno=@UserId --35
+ 
+End        

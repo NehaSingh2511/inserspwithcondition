@@ -1,0 +1,527 @@
+CREATE proc [dbo].[GetWithDrawReport]                                
+                              
+  @UserId varchar(100),                              
+                              
+ --@wallettype varchar(20)=null,                              
+                              
+  @flag varchar(50) As                                
+                              
+BEGIN                                 
+                              
+if (@flag='levelincome')                                
+                              
+ begin                                
+                              
+  Select (Select AppMstFName from AppMst b where b.AppMstRegNo=d.regno) as sname,a.sponsorid as sid,d.totalamt,a.AppMstFName,d.regno,(d.levelinc*2) as binary,d.levelinc, d.levelno,d.netamt,d.CreateDate,d.tds,d.admin,d.totalamt                             
+  
+   
+                              
+from Tbl_Level_Income d WITH (NOLOCK) left join appmst a on d.sid=a.AppMstRegNo where d.sid =@UserId  order by id desc --AND d.type=2 --and d.status=1 and LevelNo>1                                
+                              
+end                       
+                      
+                
+if (@flag='checkwithdraw')                                
+ begin                                
+ select isnull(sum(Amount),0) from tbl_ewallet where RegNo=@UserId and CreateDate=dateadd(minute,(30),dateadd(hour,(5),getutcdate()))                 
+end                   
+                 
+                  
+if (@flag='Buy_busd_details')                                
+ begin                             
+ declare @urate decimal(18,2)=0,@drate decimal(18,2)=0                
+select @urate= rate from VedicLive.tbl_usdt_rate                
+select @drate= rate from VedicLive.tbl_dollar_rate                
+ select *,(usd*@urate)/@drate as dollor from Tbl_Buy_busd where RegNo=@UserId                  
+                    
+ --select * from Tbl_Buy_busd where RegNo=@UserId                  
+end                      
+                
+                
+if (@flag='Buy_Ldctoken_details')                                
+ begin                                
+ select (usd*rate) as busd,* from Tbl_Buy_LDC_token where RegNo=@UserId                  
+end                   
+                
+                
+if (@flag='tot_ldcbusd_sum')                                
+ begin                                
+ select isnull(sum(usd*rate),0) as busd from Tbl_Buy_LDC_token where RegNo=@UserId                  
+end                    
+                
+if (@flag='magicbooster_inc')                                
+                              
+ begin                                
+                              
+  Select (Select AppMstFName from AppMst b where b.AppMstRegNo=d.regno) as sname,a.sponsorid as sid,d.totalamt,a.AppMstFName,d.regno,          
+  (d.levelinc*2) as binary,(d.levelinc/rate) as levelinc, d.levelno,d.netamt,d.CreateDate,d.tds,d.admin,d.totalamt                                
+                              
+from Tbl_Level_Income d WITH (NOLOCK) left join appmst a on d.sid=a.AppMstRegNo where d.sid =@UserId and type='ROI' order by id desc --AND d.type=2 --and d.status=1 and LevelNo>1                                  
+                              
+end                   
+                
+                
+if (@flag='magicbooster_inc_upline')                                
+                              
+ begin                                
+                              
+  Select (Select AppMstFName from AppMst b where b.AppMstRegNo=d.regno) as sname,a.sponsorid as sid,d.totalamt,a.AppMstFName,d.regno,(d.levelinc*2) as binary,(d.levelinc/rate) as levelinc, d.levelno,d.netamt,d.CreateDate,d.tds,d.admin,d.totalamt          
+  
+    
+      
+        
+          
+                      
+                              
+from Tbl_Level_Income d WITH (NOLOCK) left join appmst a on d.sid=a.AppMstRegNo where d.sid =@UserId and type='Upline' order by id desc --AND d.type=2 --and d.status=1 and LevelNo>1                                  
+   
+end                               
+                      
+                      
+                      
+                      
+                              
+if (@flag='Teamincome')                                
+                              
+begin                                
+                              
+ select (select AppMstFName from AppMst b  WITH (NOLOCK) where b.AppMstRegNo=d.regno) as sname,a.sponsorid as sid,d.totalamt,a.AppMstFName,d.regno,(d.levelinc *2) as binary,d.levelinc, d.levelno,d.netamt,d.CreateDate,d.tds,d.admin,d.totalamt              
+  
+    
+      
+        
+          
+                  
+                              
+from Tbl_Level_Income d  WITH (NOLOCK) left join appmst a WITH (NOLOCK) on d.sid=a.AppMstRegNo where d.sid =@UserId and d.status=2 and LevelNo>1 order by id asc                                
+                              
+ end                  
+                              
+if (@flag='levelincome_monthly')                                
+                              
+begin                                 
+                             
+select (select AppMstFName from AppMst b WITH (NOLOCK) where b.AppMstRegNo=d.regno) as sname,a.sponsorid as sid,d.totalamt,a.AppMstFName,d.regno,(d.levelinc *2) as binary,d.levelinc, d.levelno,d.netamt,d.CreateDate,d.tds,d.admin,d.totalamt                
+  
+    
+      
+        
+         
+                 
+                              
+from Tbl_Level_Income d WITH (NOLOCK) left join appmst a WITH (NOLOCK) on d.sid=a.AppMstRegNo where a.AppMstRegNo= @UserId and d.status=2 order by id asc                                 
+                              
+end                                 
+                              
+if (@flag='Roi_Income')                                 
+                              
+begin                               
+                              
+--selectTotalAmt,Roi,Createdate from tbl_roi where Regno=@UserId order by id asc                                 
+                              
+select RegNo,TotalAmt,Roi,Createdate from tbl_roi WITH (NOLOCK) where Regno=@UserId order by id desc                                
+                 
+                          
+ end                   
+                 
+ if (@flag='Keyin_Income')                                 
+                              
+begin                               
+   exec   Pro_Cal_key_Bonus  @UserId                
+select * from Tbl_Key_Bonus_Table where Regno=@UserId order by id                        
+--selectTotalAmt,Roi,Createdate from tbl_roi where Regno=@UserId order by id asc                                 
+                              
+--select RegNo,Totalid,(Income/rate) as Income,CreateDate from Tbl_Key_Bonus WITH (NOLOCK) where Regno=@UserId order by id desc                                
+                 
+                          
+ end                      
+                 
+ if (@flag='profit_details')                                 
+                              
+begin                               
+   exec   pro_get_profitdetails  @UserId                
+select (totearn-Totalinc) as ball, * from tbl_profit_details where Regno=@UserId                       
+--selectTotalAmt,Roi,Createdate from tbl_roi where Regno=@UserId order by id asc                                 
+                              
+--select RegNo,Totalid,(Income/rate) as Income,CreateDate from Tbl_Key_Bonus WITH (NOLOCK) where Regno=@UserId order by id desc                                
+                 
+                          
+ end                           
+                                 
+                              
+ if (@flag='Direct_income')                                
+                      
+begin                                 
+                              
+select regno,(select AppMstFName from AppMst b WITH (NOLOCK) where b.AppMstRegNo=d.regno) as sname,direct,totalamt,Createdate from tbl_direct_income d WITH (NOLOCK) where sid=@UserId                                
+                              
+  order by Createdate desc              
+                              
+ end                                 
+                              
+if (@flag='Booster_Income')                                
+                              
+begin                                
+                    
+select * from tbl_level_income where sid=@UserId order by id desc                          
+                              
+ end                   
+                 
+ if (@flag='unilevelincome')                                
+                              
+begin                                
+                    
+select d.RegNo,d.per,d.SID,(Income) as Income,d.CreateDate,d.jointype,a.OpRank,(select OpRank from AppMst b WITH (NOLOCK)           
+where b.AppMstRegNo=d.regno) rank,(select AppMstFName from AppMst b WITH (NOLOCK) where b.AppMstRegNo=d.regno) as sname           
+from Tbl_Difference_Income d WITH (NOLOCK) left join appmst a WITH (NOLOCK) on d.sid=a.AppMstRegNo where d.sid=@UserId order by id desc                           
+        
+ end                                
+                              
+ if (@flag='cbonusIncome')                                 
+                              
+ begin                                
+                              
+select(select AppMstFName from AppMst b WITH (NOLOCK) where b.AppMstRegNo=d.regno) as sname,a.sponsorid                                
+                              
+as sid,a.AppMstFName,d.regno,d.direct,d.netamt,d.tds,d.createdate, d.admin from                                
+                              
+                              
+                              
+Tbl_C_Bonus_Income d left join appmst a WITH (NOLOCK) on d.sid=a.AppMstRegNo where a.AppMstRegNo= @UserId order by CreateDate                                
+                           
+ end                                 
+                              
+ if (@flag='withdrawreport')                                
+                              
+  begin                               
+                              
+  select e.regno,e.id,e.BitcoinAddress,e.adminhashno,e.Amount,e.Remarks,(Amount*.1)                                
+                              
+as dedu,(Amount*.9) as netwith,withdra,createdate,e.CreditIn,e.Acholder_Name,e.AccountNo,e.IFSC,case when active=0 then 'Pending'                                
+                              
+else case when active=1 then 'Approved' else case when active=2 then 'Rejected'                                
+                              
+end end end as withrow_status,case when wallet=1 then 'Working'                                
+                              
+else 'Non Working' end as wallet_type from tbl_ewallet e WITH (NOLOCK) inner join appmst a WITH (NOLOCK) on a.appmstregno=e.regno                   
+                              
+where Regno=@UserId                     
+                              
+end                                 
+                              
+if (@flag='binaryincome')                                
+                              
+ begin                                
+                              
+  Select Income as Income,createdate,carryleft                                
+                              
+as carryleft,carryright as carryright,lefttotal as lefttotal,righttotal as righttotal                                
+                              
+from Tbl_Binary_Income WITH (NOLOCK) where Regno=@UserId order by Createdate desc                            
+                              
+end                                 
+                              
+if (@flag='getallmember')                                
+                              
+ begin                                 
+                           
+ select distinct case when a.jointype=0 then 'In-Active' else 'Active' end as PaidUnpaid,a.activedate,a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,                                
+ a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,jointype,l.levelno,appmstlefttotal,appmstrighttotal,          
+ case when appmstleftright=0 then 'Left' else case when appmstleftright=1 then 'Right' end end as leftright,(select isnull( sum(Total_Qty),0)  from tbl_stake_rtfi where regno=l.regno ) as rtfi           
+ from AppMst a WITH (NOLOCK) left join Tbl_Level_Details l WITH (NOLOCK) on a.appmstregno=l.regno                                
+                              
+where l.topid=@UserId order by a.appmstdoj                                 
+                              
+end                       
+                              
+if (@flag='getallmember_unpaid')                                
+                              
+begin                                 
+                      
+select distinct a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid, a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,jointype,l.levelno,appmstlefttotal,appmstrighttotal,case                                
+                              
+when appmstleftright=0 then 'Left' else case when appmstleftright=1 then' Right'                                
+                              
+end end as leftright from AppMst a  WITH (NOLOCK)left join Tbl_Level_Details l WITH (NOLOCK) on a.appmstregno=l.regno                                
+                              
+where l.topid=@UserId and a.jointype=0 order by a.appmstdoj                             
+                              
+end                                 
+                              
+if (@flag='getallmember_paid')                                
+                              
+begin                                 
+                              
+select distinct a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid, a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,jointype,l.levelno,appmstlefttotal,appmstrighttotal,case                                
+                
+when appmstleftright=0 then 'Left' else case when appmstleftright=1 then ' Right'                                
+                              
+end end as leftright from AppMst a  WITH (NOLOCK) left join Tbl_Level_Details l on a.appmstregno=l.regno                                
+                        
+where l.topid=@UserId and a.jointype>0 order by a.appmstdoj                                 
+                              
+end                                 
+                              
+if (@flag='activeid')                                
+                              
+begin                                
+                              
+ select distinct a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid, a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,jointype,l.levelno                                
+                              
+from AppMst a WITH (NOLOCK) left join Tbl_Level_Details l WITH (NOLOCK) on a.appmstregno=l.regno where l.topid=@UserId                      
+                              
+and jointype>0 order by a.appmstdoj                                 
+                              
+end                 
+                              
+if (@flag='Level_Details')                              
+                              
+ begin                               
+                              
+ select  distinct a.appmstid,a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid, a.appmstregno,a.appmstfname,a.activedate,a.sponsorid,jointype,l.levelno ,(select isnull( sum(Total_Qty),0)  from tbl_stake_rtfi where regno=l.regno ) as rtfi               
+  
+     
+     
+                 
+                
+                
+                         
+                     
+from AppMst a WITH (NOLOCK) left join Tbl_Level_Details l WITH (NOLOCK) on a.appmstregno=l.regno where l.topid=@UserId and l.levelno<=10                                                
+order by l.levelno asc                                 
+                              
+end                                 
+                              
+if (@flag='inactiveid')                                
+                              
+ begin                     
+                              
+ select distinct a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,a.appmstregno,a.appmstfname,a.appmstdoj,a.sponsorid,jointype,          
+ l.levelno from AppMst a  WITH (NOLOCK) left join Tbl_Level_Details l WITH (NOLOCK) on a.appmstregno=l.regno           
+ where l.topid=@UserId and jointype=0 order by a.appmstdoj                                 
+                              
+end                                 
+                              
+if (@flag='getrefrallist')                                 
+                              
+begin                                 
+                              
+select appmstregno,appmstfname,appmstmobile,email,appmstdoj,sponsorid,                                
+                              
+appmstregno,appmstfname,appmstdoj,sponsorid,jointype,appmstlefttotal,appmstrighttotal,ActiveDate,                                
+                              
+case when appmstleftright=0 then 'Left' else case when appmstleftright=1 then 'Right'                                
+                              
+end end as leftright, case when jointype>0 then 'Active' else 'Inactive' end as st from AppMst WITH (NOLOCK) where Sponsorid=@UserId                                 
+                              
+end                                 
+           
+if (@flag='Topupdetails')                                
+                              
+ begin                                
+                              
+select t.Regno,t.usd,t.createdate,t.comefrom,(select appmstfname from appmst a where a.appmstregno=t.regno)                                
+                              
+as sname from tbl_transaction_details t where t.comefrom=@UserId and status=1 end                                 
+                              
+if(@flag='BankDepositDetails')                                
+                              
+ begin                                
+                              
+  select amount,pmode,bankname,createdate,accounthname,utrno,idamount,paidamt,case                                
+                              
+when status=0 then 'Pending' else case when status=1 then 'Approve' else case when                         
+                              
+status=2 then 'Cancel' end end end as st from tbl_bank_details WITH (NOLOCK) where Regno=@UserId                                
+                              
+order by createdate desc                                
+                              
+ end                                 
+                              
+ IF(@flag='Leader_Bonus')                      
+                              
+  BEGIN                                
+                         
+   SELECT sid,t1.income,t1.regno,t2.appmstfname,t1.createdate from dbo.Tbl_Wonder_Income t1 WITH (NOLOCK) left join appmst t2 WITH (NOLOCK) on t1.regno=t2.appmstregno                         
+                              
+WHERE t1.sid=@UserId                                 
+                              
+END                                 
+                              
+IF(@flag='Bonus_Boost')                                
+                              
+ BEGIN                                          
+ SELECT sid,t1.income,t1.regno,t2.appmstfname,t1.createdate from dbo.Tbl_Power_Bonus t1 WITH (NOLOCK) left join appmst t2 WITH (NOLOCK) on t1.regno=t2.appmstregno                                
+                              
+WHERE t1.sid=@UserId                                
+                              
+ END                                 
+                              
+ if (@flag='FDInvestmentDetails')                                
+                              
+  begin                                
+                              
+ select t.Regno,t.usd,(usd* 2) as matAmount,dateadd(day,45,createdate) as matdate,createdate,(select appmstfname                                
+                              
+from appmst  a WITH (NOLOCK) where a.appmstregno=t.regno) as sname from tbl_transaction_details t WITH (NOLOCK) where t.regno=@UserId and status=2                                 
+    
+end if (@flag='LevelIncome')                                 
+                              
+begin                                 
+                              
+select l.regno,l.sid,l.totalamt,l.levelinc,l.levelno,l.createdate,(select                                
+                              
+appmstfname from appmst b  WITH (NOLOCK) where l.regno=b.appmstregno) as sname from tbl_level_income l WITH (NOLOCK) inner join appmst a  WITH (NOLOCK) on l.sid=a.appmstregno where sid='CG87654321' order by createdate                                
+                              
+desc                                 
+                              
+end                
+                
+if (@flag='getewalletamt')                                
+                           
+ begin                                
+                              
+  Select regno,ActiveDate from tbl_ewallet WITH (NOLOCK) where regno=@UserId and active=0                         
+              end if (@flag='PoolIncome')                                 
+                              
+  begin                                 
+                              
+  Select regno,income,createdate,totalid,levelno,0.1 as peruser from tbl_single_pool_income WITH (NOLOCK) where regno=@UserId                                
+                              
+ end                                 
+                
+                
+ if (@flag='check_active_user')                                
+                              
+begin                                
+              
+ select appmstregno from appmst WITH (NOLOCK) where appmstregno=@UserId and jointype=0                                
+                
+  end                                
+                              
+if (@flag='Wallet_RequestReport')                                 
+                              
+begin                                
+                              
+ select regno,usd,btc,tranno,createdate,case when st=0 then 'Pending' else case when st=1 then 'Approve' else case when st=2 then 'Cancel' end end end as status from Tbl_BTC_Payment_Request WITH (NOLOCK) where Regno=@UserId order by createdate desc       
+  
+    
+      
+        
+          
+                         
+                              
+ end                                
+                              
+  if (@flag='rewards')                              
+                
+ begin                              
+                              
+  exec Pro_Cal_Rewards  @regno=@UserId                               
+                              
+   select * from Tbl_Rewards where regno=@UserId order by id desc                               
+                              
+ end                              
+                       
+   if (@flag='Withdraw_ByBTC')                                
+                              
+  begin                               
+                              
+  select e.regno,e.id,e.BitcoinAddress,e.adminhashno,e.Amount,e.Remarks,(Amount*.1)as dedu,(Amount*.9) as netwith,withdra,createdate,case when active=0 then 'Pending' else case when active=1 then 'Approved' else case when active=2 then 'Rejected' end end 
+  
+    
+      
+        
+          
+end as withrow_status,case when wallet=1 then 'Working' else 'Non Working' end as wallet_type from tbl_ewallet e WITH (NOLOCK) inner join appmst a WITH (NOLOCK) on a.appmstregno=e.regno where Regno=@UserId  AND E.WalletType='BTC' order by id desc         
+  
+    
+      
+        
+          
+                     
+                              
+end                     
+                         
+  if (@flag='TransferReports')                                 
+                         
+  select * from tbl_Wallet_deduction WITH (NOLOCK)                                
+                              
+where regno=@UserId order by id desc                               
+                              
+if (@flag='check_withdra')                       
+            
+  select * from tbl_ewallet WITH (NOLOCK)                      
+                              
+where regno=@UserId and Active=0  order by id desc --and wallet=@wallettype                       
+                                
+   if (@flag='loyality')                                 
+                              
+  select * from Tbl_Pool_Income_One WITH (NOLOCK)                                
+                              
+where regno=@UserId  order by id desc              
+if (@flag='loyality')                                 
+                              
+  select * from Tbl_Pool_Income_One WITH (NOLOCK)                                
+                              
+where regno=@UserId  order by id desc             
+   if (@flag='support_fund')            
+   begin            
+   SELECT * from Tbl_Support_Fund WHERE regno=@UserId ORDER by createDate DESC            
+   end            
+   if @flag='fundrequestrpt'            
+ Begin            
+  Select Regno,Amount,BankName,PMode,Remark,Receipt,createDate,case when status=0 then 'Pending' when status=1 then 'Paid' else 'Cancelled' end st,AccountHName,UTRNO from tbl_bank_details where regno=@UserId order by createdate desc            
+ End            
+ if @flag='receivewalletrpt'            
+ Begin            
+  SELECT * from tbl_update_otherid WHERE updateid=@UserId ORDER by createDate DESC            
+ End            
+ if @flag='transferwalletrpt'            
+ Begin            
+  SELECT * from tbl_update_otherid WHERE regno=@UserId and type=2 ORDER by createDate DESC            
+ End            
+ if @flag='inbox_details'          
+ begin          
+ select m.Ticket,m.reply, a.appmstfname, m.id,m.Subject,m.RegNo,CONVERT(varchar(12),m.CreateDate,107) as CreateDate,m.Message from Tbl_Mail m left join appmst a on m.regno=a.appmstregno where (m.ToRegNo=@UserId or m.RegNo=@UserId) and m.ToRegNo<>'Deleted'
+  
+    
+      
+        
+ AND STATUS=1 order by id desc          
+ end         
+ if @flag='outbox_details'          
+ begin          
+select sendto,ticket,id,Subject,RegNo,CONVERT(varchar(12),CreateDate,107) as CreateDate,case when LEN(Message)>80 then SUBSTRING(Message,0,80)+'.............' else Message end as Msg from Tbl_Mail         
+ where RegNo=@UserId order by id desc        
+        
+ end         
+ if @flag='profile_details'          
+ begin          
+ SELECT * FROM AppMst WITH (NOLOCK) WHERE AppMstRegNo=@UserId          
+ end          
+ if @flag='kyc_details'          
+ begin          
+ select k.* from appmst a left join kycdoc k on a.appmstregno=k.Email where k.Email=@UserId        
+ end          
+ if @flag='fundtransfer'        
+ begin        
+ select *,Case When type=2 Then 'Topup Wallet' When type=3 Then 'Working Wallet' End St from tbl_update_otherid WITH (NOLOCK) where regno=@UserId and (type=2 or  type=3) order by id desc         
+ end      
+ if @flag='car_fund'          
+ begin          
+ select a.appmstfname as name,b.RegNo,b.Income,b.Createdate from tbl_Car_Fund b left join appmst a on b.regno=a.appmstregno where b.regno=@UserId        
+ end     
+ if @flag='house_fund'          
+ begin          
+ select a.appmstfname as name,b.RegNo,b.Income,b.Createdate from tbl_House_Fund b left join appmst a on b.regno=a.appmstregno where b.regno=@UserId         
+ end     
+ if @flag='bike_fund'          
+ begin          
+ select a.appmstfname as name,b.RegNo,b.Income,b.Createdate from tbl_Bike_Fund b left join appmst a on b.regno=a.appmstregno where b.regno=@UserId        
+ end     
+ if @flag='royalty_fund'          
+ begin          
+ select a.appmstfname as name,b.RegNo,b.Income,b.Createdate from tbl_Roylaty_Fund b left join appmst a on b.regno=a.appmstregno where b.regno=@UserId        
+ end     
+END 

@@ -1,0 +1,66 @@
+  
+  
+ CREATE procedure [dbo].[USP_Login]    
+  
+(      
+    
+ @EmailAddress varchar(50),        
+  
+    
+  
+ @Password varchar(50)        
+  
+)   
+  
+  
+  
+As    
+  
+BEGIN    
+  
+ Update kycdoc set status='0' where status is null    
+  
+    
+  
+ Update kycdoc set status='0' where status=''    
+  
+    
+  
+ declare @status int        
+  
+    
+  
+  If exists(Select * from AppMst where ((Rtrim(ltrim(AppMstRegNo))=@EmailAddress ) and Rtrim(ltrim(appmstpassword))=@Password) and (applock<>1 or applock is NULL))  
+  
+--If exists(Select * from AppMst where (Rtrim(ltrim(AppMstRegNo))= @AppMstRegNo) or (Rtrim(ltrim(email))= @EmailAddress)  and Rtrim(ltrim(appmstpassword))= @Password and (applock<>1 or applock is NULL))        
+  begin    
+  UPDATE AppMst SET lastLogin=GETUTCDATE()+'5:30' WHERE (Rtrim(ltrim(AppMstRegNo))= @EmailAddress)  and Rtrim(ltrim(AppMstPassword))= @Password;    
+  set @status=1    
+ end    
+ else    
+    set @status=0    
+    select @status    
+END  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+  
+  
+  
+  
+  
+  
+  
